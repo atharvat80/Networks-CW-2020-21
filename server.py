@@ -36,7 +36,7 @@ def encodeMessage(message):
 def receiveMessage(clientSocket):
     try:
         messageHeader = clientSocket.recv(headerLength)
-        # If we received no data, client has gracefully closed a connection
+        # If we received no data ignore, could be the case that they sent empty message
         if not len(messageHeader):
             return False
         # Otherwise return the data we did receive
