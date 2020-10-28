@@ -30,9 +30,9 @@ def encodeMessage(message):
     return bytes("{:<{}}".format(len(message), headerLength), "utf-8") + message
     
 
-# Send username
+# Send username and print helptext
 client.send(encodeMessage(username))
-
+print(helpText)
 
 # Will be used to stop the displayMessage thread once the user 
 # decides to leave or there's a keyboard interrupt
@@ -62,11 +62,13 @@ def displayMessages():
             sys.exit()
 
 # Start displaying incoming messages
-threading.Thread(target=displayMessages).start()
+displayMsgThread = threading.Thread(target=displayMessages)
+displayMsgThread.setDaemon(True)
+displayMsgThread.start()
 
 # Check for keyboard interrupt
 try:
-    while True:
+    while isActive:
         message = input() #f"[{username}] > "
         # send message if not empty
         if message == "--leave":
