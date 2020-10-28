@@ -16,7 +16,8 @@ To connect to the server run the `client.py` file and specify
 - The username you would like to connect as 
 - The hostname (IPV4 address) of the server
 - The port number of the server
-using the following format
+
+Using the following format
 ```bash
 path> python client.py [username] [hostname] [port]
 ```
