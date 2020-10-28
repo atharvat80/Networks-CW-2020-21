@@ -1,12 +1,16 @@
 """
 Author : 000802977, Atharva Tidke
 Project : Networks Coursework
-Based on : https://pythonprogramming.net/server-chatroom-sockets-tutorial-python-3/
 """
-import socket, select, sys, pickle
+
+import socket, select, sys, pickle, logging
 
 headerLength = 10
 hostname = socket.gethostbyname(socket.gethostname())
+logging.basicConfig(
+    level=logging.DEBUG, 
+    filename="server.log", filemode="w",
+    format="%(asctime)s  %(levelname)s %(message)s")
 
 # Validate the port number
 try:
@@ -20,16 +24,20 @@ except:
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # IPV4 , TCP
 server.bind((hostname, port))
 server.listen(5)
-print("Listening for connections on {}:{}...".format(hostname, port))
+print("Listening for connections on {}:{}".format(hostname, port))
+logging.info("Listening for connections on {}:{}".format(hostname, port))
 
 
-# Connected clients (A list of sockets)
+# Sockets is the list of connected sockets and 
+# clients stores the username associated with each socket
 sockets = [server]
 clients = {server : "server"}
 
 
 def encodeMessage(message):
     message = pickle.dumps(message)
+    # Add the message length in bytes in the header so the clients knows 
+    # how many bytes to receive before displaying the message
     return bytes("{:<{}}".format(len(message), headerLength), "utf-8") + message
 
 
@@ -50,27 +58,33 @@ def receiveMessage(clientSocket):
 
 def sendMessage(from_, to, message, exceptions = []):
     for soc in to:
+        # Send message to every socket in to except the sender, server and exceptions (if any)
         if soc not in [from_, server] + exceptions:
             try:
                 soc.send(encodeMessage({"from": clients[from_], "message": message}))
             except:
                 print("Error Sending message")
+                logging.error("Could not send {} from {} to {}".format(message, clients[from_], clients[soc]))
 
 
 def newClient(clientSocket, clientAddress, sockets = sockets, clients = clients):
     username = receiveMessage(clientSocket)
     if username != False:
+        # Register the new user
         sockets.append(clientSocket)
         clients[clientSocket] = username
+        
+        # Welcome the user and inform the others
         sendMessage(server, [clientSocket], "Welcome to the server " + username + "!")
         sendMessage(server, sockets, username + " has joined the server.", [clientSocket])
-        print("Accepted a new connection from", username, clientAddress[0], ":", clientAddress[1])
+        
+        print("Accepted a new connection from {} {}:{}".format(username, clientAddress[0], clientAddress[1]))
+        logging.info("Accepted a new connection from {} {}:{}".format(username, clientAddress[0], clientAddress[1]))
 
 
 def removeClient(clientSocket):
     sockets.remove(clientSocket)
     del clients[clientSocket]
-
 
 try:
     while True:
@@ -92,12 +106,15 @@ try:
                     removeClient(notifiedSocket)
                     print("Closed connection from", clientWhoLeft)
                     sendMessage(server, sockets, clientWhoLeft + " has left the server.")
+                    logging.info("Removed " + clientWhoLeft)
                 
+                # Send the list of current users
                 elif message == "--list":
-                    users = "\n @".join(clients.values())
-                    sendMessage(server, [notifiedSocket], "Currently connected users are: \n @" + users + "\n")
+                    users = "\n\t@".join(clients.values())
+                    sendMessage(server, [notifiedSocket], "Currently connected users are: \n\t@" + users + "\n")
                     
                 else:
+                    # A private message
                     if message.startswith("@"):
                         message = message.split(" ", 1)
                         if message[0][1:] in clients.values() and len(message) >= 2:
@@ -108,6 +125,7 @@ try:
                             sendMessage(server, [notifiedSocket], 
                             "Your message could not be delievered check\n - If the user is connected using the --list command \n - Your message was not empty")
                     
+                    # Change username
                     elif message.startswith("--changeName"):
                         message = message.split(" ", 1)
                         try:
@@ -116,12 +134,15 @@ try:
                         except:
                             sendMessage(server, [notifiedSocket], "Your username could not be changed.")
 
+                    # A group message
                     else:
                         sendMessage(notifiedSocket, sockets, message)
 
         # handle socket exceptions
         for notifiedSocket in x:
             removeClient(notifiedSocket)
+
+# Handle keyboard interrupt by shutting down the server and exiting the program
 except KeyboardInterrupt:
     server.close()
     sys.exit()
