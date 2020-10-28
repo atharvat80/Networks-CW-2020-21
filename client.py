@@ -50,7 +50,7 @@ def displayMessages():
                         
                 messageLength = int(messageLength.decode('utf-8').strip())
                 message = pickle.loads(client.recv(messageLength))
-                print("[{}] > {}".format((message['from']).ljust(10), message['message']))  
+                print("[{}] > {}".format((message['from']).ljust(10), message['message']))
         
         except IOError as e:
             if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:

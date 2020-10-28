@@ -49,14 +49,12 @@ def receiveMessage(clientSocket):
 
 
 def sendMessage(from_, to, message, exceptions = []):
-    if to == "all":
-        for soc in sockets:
-            if soc not in [from_, server] + exceptions:
+    for soc in to:
+        if soc not in [from_, server] + exceptions:
+            try:
                 soc.send(encodeMessage({"from": clients[from_], "message": message}))
-    else:
-        for soc, user in clients:
-            if user == to:
-                soc.send(encodeMessage({"from": clients[from_], "message": message}))
+            except:
+                print("Error Sending message")
 
 
 def newClient(clientSocket, clientAddress, sockets = sockets, clients = clients):
@@ -66,11 +64,8 @@ def newClient(clientSocket, clientAddress, sockets = sockets, clients = clients)
     else:
         sockets.append(clientSocket)
         clients[clientSocket] = username
-        clientSocket.send(encodeMessage({
-            "from":"server", 
-            "message": "Welcome to the server " + username + "!"
-        }))
-        sendMessage(server, "all", username + " has joined the server.", [clientSocket])
+        sendMessage(server, [clientSocket], "Welcome to the server " + username + "!")
+        sendMessage(server, sockets, username + " has joined the server.", [clientSocket])
         print("Accepted a new connection from", username, clientAddress[0], ":", clientAddress[1])
 
 
@@ -92,14 +87,28 @@ while True:
         # else a existing socket is sending a message
         else:
             message = receiveMessage(notifiedSocket)
-            if message is False:
+            if message == False:
                 # Remove the client who left and notify the other clients
                 clientWhoLeft = clients[notifiedSocket]
                 removeClient(notifiedSocket)
                 print("Closed connection from", clientWhoLeft)
-                sendMessage(server, "all", clientWhoLeft + " has left the server.")
+                sendMessage(server, sockets, clientWhoLeft + " has left the server.")
+            
+            elif message == "--list":
+                users = "\n @".join(clients.values())
+                sendMessage(server, [notifiedSocket], "Currently connected users are: \n @" + users + "\n")
+                
             else:
-                sendMessage(notifiedSocket, "all", message)
+                if message.startswith("@"):
+                    message = message.split(" ", 1)
+                    if message[0][1:] in clients.values():
+                        for soc, user in clients.items():
+                            if user == message[0][1:]:
+                                sendMessage(notifiedSocket, [soc], message[1])
+                    else:
+                        sendMessage(server, [notifiedSocket], message[0]+" is not amongst the conned users.")
+                else:
+                    sendMessage(notifiedSocket, sockets, message)
 
     # handle socket exceptions
     for notifiedSocket in x:
