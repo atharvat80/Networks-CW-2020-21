@@ -103,7 +103,7 @@ try:
                         if message[0][1:] in clients.values() and len(message) >= 2:
                             for soc, user in clients.items():
                                 if user == message[0][1:]:
-                                    sendMessage(notifiedSocket, [soc], message[1])
+                                    sendMessage(notifiedSocket, [soc], '(whispered) '+ message[1])
                         else:
                             sendMessage(server, [notifiedSocket], 
                             "Your message could not be delievered check\n - If the user is connected using the --list command \n - Your message was not empty")
