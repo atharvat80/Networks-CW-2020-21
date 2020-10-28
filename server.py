@@ -71,6 +71,7 @@ def removeClient(clientSocket):
     sockets.remove(clientSocket)
     del clients[clientSocket]
 
+
 try:
     while True:
         r, w, x = select.select(sockets, [], sockets)
@@ -99,12 +100,22 @@ try:
                 else:
                     if message.startswith("@"):
                         message = message.split(" ", 1)
-                        if message[0][1:] in clients.values():
+                        if message[0][1:] in clients.values() and len(message) >= 2:
                             for soc, user in clients.items():
                                 if user == message[0][1:]:
                                     sendMessage(notifiedSocket, [soc], message[1])
                         else:
-                            sendMessage(server, [notifiedSocket], message[0]+" is not amongst the connected users.")
+                            sendMessage(server, [notifiedSocket], 
+                            "Your message could not be delievered check if the user is connected and your didn't send an empty string.")
+                    
+                    elif message.startswith("--changeName"):
+                        message = message.split(" ", 1)
+                        try:
+                            clients[notifiedSocket] == message[1]
+                            sendMessage(server, [notifiedSocket], "Your username has been changed to " + message[1]  + ".")
+                        except:
+                            sendMessage(server, [notifiedSocket], "Your username could not be changed.")
+
                     else:
                         sendMessage(notifiedSocket, sockets, message)
 
