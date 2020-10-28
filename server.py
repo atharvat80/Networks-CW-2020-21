@@ -62,6 +62,7 @@ def sendMessage(from_, to, message, exceptions = []):
         if soc not in [from_, server] + exceptions:
             try:
                 soc.send(encodeMessage({"from": clients[from_], "message": message}))
+                logging.info("Sent a message from {} to {}".format(clients[from_], clients[soc]))
             except:
                 print("Error Sending message")
                 logging.error("Could not send {} from {} to {}".format(message, clients[from_], clients[soc]))
@@ -106,7 +107,7 @@ try:
                     removeClient(notifiedSocket)
                     print("Closed connection from", clientWhoLeft)
                     sendMessage(server, sockets, clientWhoLeft + " has left the server.")
-                    logging.info("Removed " + clientWhoLeft)
+                    logging.info("Removed client " + clientWhoLeft)
                 
                 # Send the list of current users
                 elif message == "--list":
@@ -127,12 +128,12 @@ try:
                     
                     # Change username
                     elif message.startswith("--changeName"):
-                        message = message.split(" ", 1)
                         try:
+                            message = message.split(" ", 1)
                             oldName = clients[notifiedSocket]
                             clients[notifiedSocket] = message[1]
                             sendMessage(server, [notifiedSocket], "Your username has been changed to {}.".format(message[1]))
-                            sendMessage(server, [sockets], "{} changed their username to {}".format(oldName, message[1]))
+                            sendMessage(server, sockets, "{} changed their username to {}".format(oldName, message[1]), [notifiedSocket])
                         except:
                             sendMessage(server, [notifiedSocket], "Your username could not be changed.")
 
