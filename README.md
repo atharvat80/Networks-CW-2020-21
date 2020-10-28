@@ -32,8 +32,8 @@ path> python client.py [username] [hostname] [port]
 | Command     | Description |
 | ----------- | ----------- |
 | `--help`  |Display the help text. This text is also displayed at the beginning when the user joins the server.|
-| `--list` |List all other current users.     |
-| `--changeName [new username]`  |Change your username.|
-| `--leave`  |Leave the server. |
+| `--list` |List all other current users   |
+| `--changeName [new username]`  |Change your username|
+| `--leave`  |Leave the server|
 
  
