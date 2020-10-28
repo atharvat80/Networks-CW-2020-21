@@ -12,10 +12,10 @@ except:
     print("\tpython client.py [username] [hostname] [port]\n")
     sys.exit()
 
-
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 try:
-    print("Connecting to the server...\n")
+    print("Trying to connect to the server...\n")
     client.connect((hostname, port))
 except Exception as e:
     print("Could not connect to the server due to following error :\n", e)
@@ -23,10 +23,11 @@ except Exception as e:
 
 client.setblocking(False)
 
-# Encode python dictionaries as byte objects so they can be transported
-# This also adds the length of the message at the beginning so check how many bytes to read 
+
 def encodeMessage(message):
     message = pickle.dumps(message)
+    # Add the message length in bytes in the header so the server knows 
+    # how many bytes to receive before the message ends
     return bytes("{:<{}}".format(len(message), headerLength), "utf-8") + message
     
 
@@ -61,7 +62,7 @@ def displayMessages():
             print('Reading error: ' + str(e))
             sys.exit()
 
-# Start displaying incoming messages
+# Start displaying incoming messages using a new thread
 displayMsgThread = threading.Thread(target=displayMessages)
 displayMsgThread.setDaemon(True)
 displayMsgThread.start()
@@ -70,18 +71,24 @@ displayMsgThread.start()
 try:
     while isActive:
         message = input() #f"[{username}] > "
-        # send message if not empty
+        
+        # Leave the server, kill displayMsThread
         if message == "--leave":
             print("You have now left the server.")
             isActive = False
             sys.exit()
+        
+        # Print help text
         elif message == "--help":
             print(helpText)
+        
+        # Otherwise send message to server
         else:
             try:
                 client.send(encodeMessage(message))
             except Exception as e:
                 print("Your message could not be delivered due to following error:\n", e)
 
+# Kill displayMsThread
 except KeyboardInterrupt:
     isActive = False
