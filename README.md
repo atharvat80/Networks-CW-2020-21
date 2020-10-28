@@ -29,11 +29,11 @@ path> python client.py [username] [hostname] [port]
    ```
  ### Available commands
  The functionalty of the commads below is accesible by typing the command after the prompt.
-| Command     | Description |
-| ----------- | ----------- |
-| `--help`  |Display the help text. This text is also displayed at the beginning when the user joins the server.|
-| `--list` |List all other current users   |
-| `--changeName [new username]`  |Change your username|
-| `--leave`  |Leave the server|
+|Command    |Description|
+|-----------|-----------|
+|`--help`|Display the help text. This text is also displayed at the beginning when the user joins the server.|
+|`--list`|List all other current users   |
+|`--changeName [new username]`|Change your username|
+|`--leave`|Leave the server|
 
  
