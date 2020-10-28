@@ -106,7 +106,7 @@ try:
                                     sendMessage(notifiedSocket, [soc], message[1])
                         else:
                             sendMessage(server, [notifiedSocket], 
-                            "Your message could not be delievered check if the user is connected and your didn't send an empty string.")
+                            "Your message could not be delievered check\n - If the user is connected using the --list command \n - Your message was not empty")
                     
                     elif message.startswith("--changeName"):
                         message = message.split(" ", 1)
