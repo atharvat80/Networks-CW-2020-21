@@ -111,7 +111,7 @@ try:
                     elif message.startswith("--changeName"):
                         message = message.split(" ", 1)
                         try:
-                            clients[notifiedSocket] == message[1]
+                            clients[notifiedSocket] = message[1]
                             sendMessage(server, [notifiedSocket], "Your username has been changed to " + message[1]  + ".")
                         except:
                             sendMessage(server, [notifiedSocket], "Your username could not be changed.")
