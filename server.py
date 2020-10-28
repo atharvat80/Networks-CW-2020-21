@@ -20,7 +20,7 @@ except:
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # IPV4 , TCP
 server.bind((hostname, port))
 server.listen(5)
-print(f"Listening for connections on {hostname}:{port}...")
+print("Listening for connections on {}:{}...".format(hostname, port))
 
 
 # Connected clients (A list of sockets)
@@ -30,7 +30,7 @@ clients = {server : "server"}
 
 def encodeMessage(message):
     message = pickle.dumps(message)
-    return bytes(f"{len(message):<{headerLength}}", "utf-8") + message
+    return bytes("{:<{}}".format(len(message), headerLength), "utf-8") + message
 
 
 def receiveMessage(clientSocket):
@@ -54,7 +54,9 @@ def sendMessage(from_, to, message, exceptions = []):
             if soc not in [from_, server] + exceptions:
                 soc.send(encodeMessage({"from": clients[from_], "message": message}))
     else:
-        pass
+        for soc, user in clients:
+            if user == to:
+                soc.send(encodeMessage({"from": clients[from_], "message": message}))
 
 
 def newClient(clientSocket, clientAddress, sockets = sockets, clients = clients):
@@ -64,9 +66,12 @@ def newClient(clientSocket, clientAddress, sockets = sockets, clients = clients)
     else:
         sockets.append(clientSocket)
         clients[clientSocket] = username
-        clientSocket.send(encodeMessage({"from":"server", "message":f"Welcome to the server {username}!"}))
-        sendMessage(server, "all", f"{username} has joined the server.", [clientSocket])
-        print(f"Accepted a new connection from '{username}' {clientAddress[0]}:{clientAddress[1]}")
+        clientSocket.send(encodeMessage({
+            "from":"server", 
+            "message": "Welcome to the server " + username + "!"
+        }))
+        sendMessage(server, "all", username + " has joined the server.", [clientSocket])
+        print("Accepted a new connection from", username, clientAddress[0], ":", clientAddress[1])
 
 
 def removeClient(clientSocket):
@@ -91,8 +96,8 @@ while True:
                 # Remove the client who left and notify the other clients
                 clientWhoLeft = clients[notifiedSocket]
                 removeClient(notifiedSocket)
-                print(f"Closed connection from {clientWhoLeft}")
-                sendMessage(server, "all", f"{clientWhoLeft} has left the server")
+                print("Closed connection from", clientWhoLeft)
+                sendMessage(server, "all", clientWhoLeft + " has left the server.")
             else:
                 sendMessage(notifiedSocket, "all", message)
 

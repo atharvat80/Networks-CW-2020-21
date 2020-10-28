@@ -6,11 +6,10 @@ with open("help.txt", "r") as f:
 
 # Validate given arguments
 try:
-    username = sys.argv[1]
-    hostname = sys.argv[2]
-    port = int(sys.argv[3])
+    username, hostname, port = sys.argv[1], sys.argv[2], int(sys.argv[3])
 except:
-    print("Arguments missing, please specify the username you would like to connect as and the port and hostname of the server")
+    print("\nOne or more arguments missing/invalid, please run the program as following:")
+    print("\tpython client.py [username] [hostname] [port]\n")
     sys.exit()
 
 
@@ -28,7 +27,7 @@ client.setblocking(False)
 # This also adds the length of the message at the beginning so check how many bytes to read 
 def encodeMessage(message):
     message = pickle.dumps(message)
-    return bytes(f"{len(message):<{headerLength}}", "utf-8") + message
+    return bytes("{:<{}}".format(len(message), headerLength), "utf-8") + message
     
 
 # Send username
@@ -51,7 +50,7 @@ def displayMessages():
                         
                 messageLength = int(messageLength.decode('utf-8').strip())
                 message = pickle.loads(client.recv(messageLength))
-                print(f"[{(message['from']).ljust(10)}] > {message['message']}")  
+                print("[{}] > {}".format((message['from']).ljust(10), message['message']))  
         
         except IOError as e:
             if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
