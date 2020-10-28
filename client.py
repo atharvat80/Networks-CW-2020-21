@@ -1,11 +1,14 @@
 import socket, sys, errno, pickle, threading
 headerLength = 10
 
+with open("help.txt", "r") as f:
+    helpText = f.read()
+
 # Validate given arguments
 try:
     username = sys.argv[1]
-    port = int(sys.argv[2])
-    hostname = sys.argv[3]
+    hostname = sys.argv[2]
+    port = int(sys.argv[3])
 except:
     print("Arguments missing, please specify the username you would like to connect as and the port and hostname of the server")
     sys.exit()
@@ -67,11 +70,13 @@ try:
     while True:
         message = input() #f"[{username}] > "
         # send message if not empty
-        if message.strip() == "leave":
+        if message == "--leave":
             print("You have now left the server.")
             isActive = False
             sys.exit()
-        elif message:
+        elif message == "--help":
+            print(helpText)
+        else:
             try:
                 client.send(encodeMessage(message))
             except Exception as e:
