@@ -129,7 +129,7 @@ try:
                     # Change username
                     elif message.startswith("--changeName"):
                         try:
-                            message = message.split(" ", 1)
+                            message = message.split(" ")
                             oldName = clients[notifiedSocket]
                             clients[notifiedSocket] = message[1]
                             sendMessage(server, [notifiedSocket], "Your username has been changed to {}.".format(message[1]))
@@ -145,7 +145,11 @@ try:
         for notifiedSocket in x:
             removeClient(notifiedSocket)
 
-# Handle keyboard interrupt by shutting down the server and exiting the program
 except KeyboardInterrupt:
-    server.close()
-    sys.exit()
+    logging.info("Stopped the server")
+
+except Exception as e:
+    logging.error(e)
+
+server.close()
+sys.exit()
