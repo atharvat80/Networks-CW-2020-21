@@ -46,7 +46,7 @@ def displayMessages():
             while True: 
                 messageLength = client.recv(headerLength)
                 if not len(messageLength):
-                    print("Connection closed by the server.")
+                    print("Connection closed by the server, press Enter to exit.")
                     sys.exit()
                         
                 messageLength = int(messageLength.decode('utf-8').strip())
@@ -56,20 +56,21 @@ def displayMessages():
         except IOError as e:
             if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
                 print('Reading error: ' + str(e))
+                print("Press Enter to exit.")
                 sys.exit()
 
         except Exception as e:
             print('Reading error: ' + str(e))
+            print("Press Enter to exit.")
             sys.exit()
 
 # Start displaying incoming messages using a new thread
 displayMsgThread = threading.Thread(target=displayMessages)
-displayMsgThread.setDaemon(True)
 displayMsgThread.start()
 
 # Check for keyboard interrupt
 try:
-    while isActive:
+    while displayMsgThread.isAlive():
         message = input() #f"[{username}] > "
         
         # Leave the server, kill displayMsThread
@@ -83,7 +84,7 @@ try:
             print(helpText)
         
         # Otherwise send message to server
-        else:
+        elif message != '':
             try:
                 client.send(encodeMessage(message))
             except Exception as e:
@@ -91,4 +92,6 @@ try:
 
 # Kill displayMsThread
 except KeyboardInterrupt:
+    print("You have now left the server.")
     isActive = False
+    sys.exit()
