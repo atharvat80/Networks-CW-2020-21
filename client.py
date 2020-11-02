@@ -1,10 +1,14 @@
+"""
+Author : 000802977, Atharva Tidke
+Project : Networks Coursework
+"""
+
 import socket, sys, errno, pickle, threading
 headerLength = 10
 
 with open("help.txt", "r") as f:
     helpText = f.read()
 
-# Validate given arguments
 try:
     username, hostname, port = sys.argv[1], sys.argv[2], int(sys.argv[3])
 except:
@@ -25,23 +29,23 @@ client.setblocking(False)
 
 
 def encodeMessage(message):
+    """Add the message length in bytes in the header so the server knows 
+    how many bytes to receive to get the full message"""
     message = pickle.dumps(message)
-    # Add the message length in bytes in the header so the server knows 
-    # how many bytes to receive before the message ends
     return bytes("{:<{}}".format(len(message), headerLength), "utf-8") + message
     
 
-# Send username and print helptext
 client.send(encodeMessage(username))
 print(helpText)
 
-# Will be used to stop the displayMessage thread once the user 
-# decides to leave or there's a keyboard interrupt
+"""Will be used to stop the displayMessage thread once the user 
+decides to leave or there's a keyboard interrupt"""
 isActive = True
 
+
 def displayMessages():
+    # Loop over received messages
     while isActive:
-        # Loop over received messages
         try:
             while True: 
                 messageLength = client.recv(headerLength)
@@ -64,33 +68,28 @@ def displayMessages():
             print("Press Enter to exit.")
             sys.exit()
 
-# Start displaying incoming messages using a new thread
+
 displayMsgThread = threading.Thread(target=displayMessages)
 displayMsgThread.start()
 
-# Check for keyboard interrupt
 try:
     while displayMsgThread.isAlive():
         message = input() #f"[{username}] > "
         
-        # Leave the server, kill displayMsThread
         if message == "--leave":
             print("You have now left the server.")
             isActive = False
             sys.exit()
         
-        # Print help text
         elif message == "--help":
             print(helpText)
         
-        # Otherwise send message to server
         elif message != '':
             try:
                 client.send(encodeMessage(message))
             except Exception as e:
                 print("Your message could not be delivered due to following error:\n", e)
 
-# Kill displayMsThread
 except KeyboardInterrupt:
     print("You have now left the server.")
     isActive = False

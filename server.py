@@ -12,7 +12,6 @@ logging.basicConfig(
     filename="server.log", filemode="w",
     format="%(asctime)s  %(levelname)s %(message)s")
 
-# Validate the port number
 try:
     port = int(sys.argv[1])
 except:
@@ -20,34 +19,32 @@ except:
     sys.exit()
 
 
-# Setup the server and listen for requests
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # IPV4 , TCP
 server.bind((hostname, port))
-server.listen(5)
-print("Listening for connections on {}:{}".format(hostname, port))
+server.listen()
 logging.info("Listening for connections on {}:{}".format(hostname, port))
+print("Listening for connections on {}:{}".format(hostname, port))
 
 
-# Sockets is the list of connected sockets and 
-# clients stores the username associated with each socket
+# Sockets is the list of connected sockets and clients stores the username associated with each socket
 sockets = [server]
 clients = {server : "server"}
 
 
 def encodeMessage(message):
+    """Add the message length in bytes in the header so the clients knows 
+    how many bytes to receive before displaying the message"""
     message = pickle.dumps(message)
-    # Add the message length in bytes in the header so the clients knows 
-    # how many bytes to receive before displaying the message
     return bytes("{:<{}}".format(len(message), headerLength), "utf-8") + message
 
 
 def receiveMessage(clientSocket):
+    """Identifies message length, receives, decodes and returns it
+    returns False if empty or can't be decoded"""
     try:
         messageHeader = clientSocket.recv(headerLength)
-        # If we received no data ignore, could be the case that they sent empty message
         if not len(messageHeader):
             return False
-        # Otherwise return the data we did receive
         else:
             messageLength = int(messageHeader.decode("utf-8").strip())
             messageData = clientSocket.recv(messageLength)
@@ -57,8 +54,9 @@ def receiveMessage(clientSocket):
 
 
 def sendMessage(from_, to, message, exceptions = []):
+    """Sends a message to every socket in 'to' except the sender, server 
+    and sockets in exceptions (if any)"""
     for soc in to:
-        # Send message to every socket in to except the sender, server and exceptions (if any)
         if soc not in [from_, server] + exceptions:
             try:
                 soc.send(encodeMessage({"from": clients[from_], "message": message}))
@@ -71,16 +69,13 @@ def sendMessage(from_, to, message, exceptions = []):
 def newClient(clientSocket, clientAddress, sockets = sockets, clients = clients):
     username = receiveMessage(clientSocket)
     if username != False:
-        # Register the new user
         sockets.append(clientSocket)
         clients[clientSocket] = username
-        
-        # Welcome the user and inform the others
         sendMessage(server, [clientSocket], "Welcome to the server " + username + "!")
         sendMessage(server, sockets, username + " has joined the server.", [clientSocket])
         
-        print("Accepted a new connection from {} {}:{}".format(username, clientAddress[0], clientAddress[1]))
         logging.info("Accepted a new connection from {} {}:{}".format(username, clientAddress[0], clientAddress[1]))
+        print("Accepted a new connection from {} {}:{}".format(username, clientAddress[0], clientAddress[1]))
 
 
 def removeClient(clientSocket):
@@ -152,4 +147,3 @@ except Exception as e:
     logging.error(e)
 
 server.close()
-sys.exit()
