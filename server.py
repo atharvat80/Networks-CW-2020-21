@@ -29,7 +29,8 @@ logging.info("Listening for connections on {}:{}".format(hostname, port))
 print("Listening for connections on {}:{}".format(hostname, port))
 
 
-# Sockets is the list of connected sockets and clients stores the username associated with each socket
+# Sockets is the list of connected sockets and 
+# clients stores the username associated with each socket
 sockets = [server]
 clients = {server: "Server"}
 
@@ -107,8 +108,7 @@ def changeName(clientSocket, oldname, newname):
     sendMessage(server, [clientSocket], 
         "Your username has been changed from @{} to @{}".format(oldname, newname))
     sendMessage(server, sockets, 
-        "@{} changed their name to @{}".format(oldname, newname),
-        [clientSocket])
+        "@{} changed their name to @{}".format(oldname, newname), [clientSocket])
     logging.info("@{} changed their name to @{}".format(oldname, newname))
     
 
@@ -135,43 +135,32 @@ def groupMsg(sender, message):
 try:
     while True:
         r, w, x = select.select(sockets, [], sockets)
-
-        # Handle sockets currently being monitored
         for notifiedSocket in r:
-             # if the notified socket is the server then a new client has connected
             if notifiedSocket == server:
                 clientSocket, clientAddress = server.accept()
                 newClient(clientSocket, clientAddress)
-
-            # else a existing socket is sending a message
             else:
                 message = receiveMessage(notifiedSocket)
                 if message == False: 
-                    # Remove client
                     removeClient(notifiedSocket)
                 elif message == "--list":
-                    # Send the list of active users
                     sendClientList(notifiedSocket)
                 else:
                     if message.startswith("@"):
-                        # A private message
                         try:
                             to, message = message[1:].split(" ", 1)
                             privateMsg(notifiedSocket, to, message)
                         except:
-                            sendMessage(server, [notifiedSocket], 
-                                "Can't send an empty message.")
+                            sendMessage(server, [notifiedSocket], "Can't send an empty message.")
                     elif message.startswith("--changeName"):
-                        # Change username
                         newname = message[12:].lstrip()
-                        if newname != '':
+                        if newname != '' and newname not in clients.values():
                             changeName(notifiedSocket, clients[notifiedSocket], newname)
                         else:
-                            sendMessage(server, [notifiedSocket], "Your new username can't be empty.")
+                            sendMessage(server, [notifiedSocket], "Can't change your username to " + newname)
                     else:
-                        # A group message
                         groupMsg(notifiedSocket, message)
-
+        
         # handle socket exceptions
         for notifiedSocket in x:
             removeClient(notifiedSocket)
@@ -183,3 +172,4 @@ except Exception as e:
     logging.error(e)
 
 server.close()
+logging.info("Server shut down")
