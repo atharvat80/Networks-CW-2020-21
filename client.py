@@ -3,8 +3,13 @@ Author : 000802977, Atharva Tidke
 Project : Networks Coursework
 """
 
-import socket, sys, errno, pickle, threading
-headerLength = 10
+import socket
+import sys
+import errno
+import pickle
+import threading
+
+HEADERLEN = 10
 
 with open("help.txt", "r") as f:
     helpText = f.read()
@@ -32,14 +37,14 @@ def encodeMessage(message):
     """Add the message length in bytes in the header so the server knows 
     how many bytes to receive to get the full message"""
     message = pickle.dumps(message)
-    return bytes("{:<{}}".format(len(message), headerLength), "utf-8") + message
-    
+    return bytes(str(len(message)).ljust(HEADERLEN), "utf-8") + message
+
 
 client.send(encodeMessage(username))
 print(helpText)
 
-"""Will be used to stop the displayMessage thread once the user 
-decides to leave or there's a keyboard interrupt"""
+# Will be used to stop the displayMessage thread once the user 
+# decides to leave or there's a keyboard interrupt
 isActive = True
 
 
@@ -47,26 +52,21 @@ def displayMessages():
     # Loop over received messages
     while isActive:
         try:
-            while True: 
-                messageLength = client.recv(headerLength)
+            while True:
+                messageLength = client.recv(HEADERLEN)
                 if not len(messageLength):
                     print("Connection closed by the server, press Enter to exit.")
                     sys.exit()
-                        
+
                 messageLength = int(messageLength.decode('utf-8').strip())
                 message = pickle.loads(client.recv(messageLength))
                 print("[{}] > {}".format((message['from']).ljust(10), message['message']))
-        
-        except IOError as e:
-            if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
-                print('Reading error: ' + str(e))
-                print("Press Enter to exit.")
-                sys.exit()
 
         except Exception as e:
-            print('Reading error: ' + str(e))
-            print("Press Enter to exit.")
-            sys.exit()
+            if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
+                print('Following error occurred while fetching messages\n', str(e),
+                      '\nPress Enter to exit')
+                sys.exit()
 
 
 displayMsgThread = threading.Thread(target=displayMessages)
@@ -74,16 +74,16 @@ displayMsgThread.start()
 
 try:
     while displayMsgThread.isAlive():
-        message = input() #f"[{username}] > "
-        
+        message = input()
+
         if message == "--leave":
             print("You have now left the server.")
             isActive = False
             sys.exit()
-        
+
         elif message == "--help":
             print(helpText)
-        
+
         elif message != '':
             try:
                 client.send(encodeMessage(message))
