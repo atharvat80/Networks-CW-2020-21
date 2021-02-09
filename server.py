@@ -66,8 +66,8 @@ def sendMessage(from_, to, message, exceptions=[]):
                 soc.send(encodeMessage({"from": clients[from_], "message": message}))
             except Exception as e:
                 print("Error Sending message\n",e)
-                logging.error("Could not send {} from {} to {}".format(
-                    message, clients[from_], clients[soc]))
+                logging.error("{} while sending message from {} to {}"
+                    .format(str(e), clients[from_], clients[soc]))
 
 
 def newClient(clientSocket, clientAddress):
@@ -112,7 +112,6 @@ def changeName(clientSocket, oldname, newname):
     logging.info("@{} changed their name to @{}".format(oldname, newname))
     
 
-
 def privateMsg(sender, receiver, message):
     sender_soc = None
     for soc in clients.keys():
@@ -121,16 +120,37 @@ def privateMsg(sender, receiver, message):
             break    
    
     if sender_soc != None:
-        sendMessage(sender, [sender_soc], '(whispered) '+message)
+        sendMessage(sender, [sender_soc], '(whispered) ' + message)
         logging.info("{} sent a message to {}".format(clients[sender], receiver))
     else:
-        sendMessage(server, [sender], to + " not found in active users.")
+        sendMessage(server, [sender], receiver + " not found in active users.")
 
 
 def groupMsg(sender, message):
     sendMessage(sender, sockets, message)
     logging.info(clients[sender] + " sent a group message")
 
+
+def handleMessage(message, sender):
+    if message == False: 
+        removeClient(sender)
+    elif message == "--list":
+        sendClientList(sender)
+    else:
+        if message.startswith("@"):
+            try:
+                to, message = message[1:].split(" ", 1)
+                privateMsg(sender, to, message)
+            except:
+                sendMessage(server, [sender], "Can't send an empty message.")
+        elif message.startswith("--changeName"):
+            newname = message[12:].strip()
+            if newname != '' and newname not in clients.values():
+                changeName(sender, clients[sender], newname)
+            else:
+                sendMessage(server, [sender], "Can't change your username to " + newname)
+        else:
+            groupMsg(sender, message)
 
 try:
     while True:
@@ -141,25 +161,7 @@ try:
                 newClient(clientSocket, clientAddress)
             else:
                 message = receiveMessage(notifiedSocket)
-                if message == False: 
-                    removeClient(notifiedSocket)
-                elif message == "--list":
-                    sendClientList(notifiedSocket)
-                else:
-                    if message.startswith("@"):
-                        try:
-                            to, message = message[1:].split(" ", 1)
-                            privateMsg(notifiedSocket, to, message)
-                        except:
-                            sendMessage(server, [notifiedSocket], "Can't send an empty message.")
-                    elif message.startswith("--changeName"):
-                        newname = message[12:].lstrip()
-                        if newname != '' and newname not in clients.values():
-                            changeName(notifiedSocket, clients[notifiedSocket], newname)
-                        else:
-                            sendMessage(server, [notifiedSocket], "Can't change your username to " + newname)
-                    else:
-                        groupMsg(notifiedSocket, message)
+                handleMessage(message, notifiedSocket)
         
         # handle socket exceptions
         for notifiedSocket in x:
