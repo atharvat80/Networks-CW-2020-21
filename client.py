@@ -73,7 +73,7 @@ displayMsgThread = threading.Thread(target=displayMessages)
 displayMsgThread.start()
 
 try:
-    while displayMsgThread.is_alive():
+    while displayMsgThread.isAlive():
         message = input()
 
         if message == "--leave":
@@ -86,7 +86,7 @@ try:
 
         elif message != '':
             if message != "--list":
-                print("[{}] > {}".format(username.ljust(10), message))
+                print("[{}] > {}".format('YOU       ', message))
             try:
                 client.send(encodeMessage(message))
             except Exception as e:
