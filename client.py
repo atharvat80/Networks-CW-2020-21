@@ -24,7 +24,7 @@ except:
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
-    print("Trying to connect to the server...\n")
+    print("Trying to connect to the server at {}:{}\n".format(hostname, port))
     client.connect((hostname, port))
 except Exception as e:
     print("Could not connect to the server due to following error :\n", e)
@@ -73,7 +73,7 @@ displayMsgThread = threading.Thread(target=displayMessages)
 displayMsgThread.start()
 
 try:
-    while displayMsgThread.isAlive():
+    while displayMsgThread.is_alive():
         message = input()
 
         if message == "--leave":
@@ -85,6 +85,8 @@ try:
             print(helpText)
 
         elif message != '':
+            if message != "--list":
+                print("[{}] > {}".format(username.ljust(10), message))
             try:
                 client.send(encodeMessage(message))
             except Exception as e:
