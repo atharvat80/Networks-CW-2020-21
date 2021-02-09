@@ -9,7 +9,7 @@ import errno
 import pickle
 import threading
 
-HEADERLEN = 10
+HEADERLEN = 20
 
 with open("help.txt", "r") as f:
     helpText = f.read()

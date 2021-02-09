@@ -9,7 +9,7 @@ import sys
 import pickle
 import logging
 
-HEADERLEN = 10
+HEADERLEN = 20
 hostname = socket.gethostbyname(socket.gethostname())
 logging.basicConfig(
     level=logging.DEBUG,
