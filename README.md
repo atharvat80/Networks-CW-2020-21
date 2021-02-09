@@ -19,13 +19,13 @@ To connect to the server run the `client.py` file and specify
 
 Using the following format
 ```bash
-path> python client.py [username] [hostname] [port]
+ > python client.py [username] [hostname] [port]
 ```
 ### Sending messages
 1. Group messages : Simply type in the body of your message after the prompt as messages are sent to everyone by default unless specified otherwise.
-2. Private messages : Prefixed by a '@' type in the username of the person you would like to send a message to, followed by a space and the body of your message i.e. in the following format
+2. Private messages : Prefixed by a '@' type in the username of the person you would like to send a message to, followed by the body of your message i.e. in the following format
    ```
-   @username Your message to 'username' here.
+   @username Your message to 'username' here...
    ```
  ### Available commands
  The functionalty of the commads below is accesible by typing the command after the prompt.
@@ -36,4 +36,3 @@ path> python client.py [username] [hostname] [port]
 |`--changeName [new username]`|Change your username|
 |`--leave`|Leave the server|
 
- 
