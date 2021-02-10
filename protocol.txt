@@ -36,7 +36,10 @@ I decided to use this format because it makes it easy for the client to retrieve
 server using just the python standard library and it also makes it easy for the client to parse the
 message so that it can be displayed.
 
-Protocols for different types of messages
+Protocol for communicating with server is described below, message body of the commands for the server 
+start with '--', list of available commands and their function is also described below. If you send an
+unknown command server will respond with an error. 
+
     1)  Protocol for joining and leaving the server :
         a)  To join - The body of the initial message you send to the server is after establishing
             a connection with the server is used as the username you like the join the chat with,
