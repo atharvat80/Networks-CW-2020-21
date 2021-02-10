@@ -1,0 +1,106 @@
+Author : htrf88
+
+All messages sent between the server and the client are in the following format :
+
+    [header][message body]
+
+    a)  header has a fixed length of 20 characters/bytes it encodes the length of the message
+        body, this is to inform the server and the client how many bytes to receive in order to
+        get the full message
+    b)  message body is the contents of the message you want to send to the server
+    c)  the message should have utf-8 encoding
+
+    You can generate the messages used for this protocol as follows in Python
+
+        HEADERLEN = 20
+        message = json.dumps(message)
+        header = str(len(message)).ljust(HEADERLEN)
+        return (header + message).encode()
+
+    Example 1,
+        A message containing the text "This is the body of a sample message" which has 36 characters
+        can be sent to the server as  "36                  This is the body of a sample message".
+        Here,
+
+            [36                  ][This is the body of a sample message]
+            Header - 20 chars      Message body - 36 chars
+
+The message body of the responses from the server are JSON objects in the following format
+
+    {
+        "from" : [username]
+        "message" : [body of the response from the server]
+    }
+
+I decided to use this format because it makes it easy for the client to retrieve messages from the
+server using just the python standard library and it also makes it easy for the client to parse the
+message so that it can be displayed.
+
+Protocols for different types of messages
+    1)  Protocol for joining and leaving the server :
+        a)  To join - The body of the initial message you send to the server is after establishing
+            a connection with the server is used as the username you like the join the chat with,
+
+            If you do not send a username the server will not allow you to join the chat. If your
+            chosen username is invalid i.e. a blank string or it's already in use the server will
+            respond with a welcome message
+
+            Example 2,
+                If you try to join with the username 'test', you should send '4                   test'
+                as the initial message to the server.
+
+                If the name is valid the server will respond with the following
+                '60                  {"from": "Server", "message": "Welcome to the server test!"}'
+
+                and if it is invalid the server will respond with the following
+                '122                 {"from": "Server", "message": "Your chosen user is invalid or not
+                available, please try again with a different username."}'
+
+        b)  To leave - send a message with message body "--leave" and the server will close the
+            connection with your machine. i.e. send '7                   --leave' to the server
+            to leave.
+
+
+    2)  Protocol for sending group message : group messages do not have a special protocol, Example 1
+        is also an example of group message.
+
+
+    3)  Protocol for sending a private message : to send a private message the message body should
+        begin with '@' followed by the username of the user you want to send the the message to
+        followed by the a space followed by the message body. If the message body is empty, server
+        will not deliver this message. If the user you specified does not exist in the current
+        active clients the server will respond with an error saying "@username not found in active
+        users"
+
+        For example, message containing the text "This is a private message for user1" can be sent
+        as "42                  @user1 This is a private message for user1" and the server will send
+        the message to user1.
+
+
+    4)  Protocol to request the list of connected clients :
+        a)  Send a message with the message body containing "--listall" and the server will respond with
+            the list of connected clients.
+        b)  Send a message with the message body containing "--list" and the server will respond with the
+            list of all other connected clients, your name will be excluded from this list.
+
+
+    5)  Protocol for choosing a new name : message body should start with "--rename" followed by
+        the new username.
+
+        If your chosen username is an empty string or if it is already taken the server will
+        respond with an message saying request couldn't be completed, otherwise, an acknowledgement
+        will of the change will be sent by the server.
+
+        For example, to change your username to 'test' send the following message,
+        "13                  --rename test"
+
+        If the name is valid the server will respond with the following,
+        '87                  {"from": "Server", "message": "Your username has been changed from
+        @username to @test"}'
+
+        Otherwise, the server will respond with the following,
+        '68                  {"from": "Server", "message": "Can\'t change your username to @test"}'
+
+
+    6)  Protocol for requesting the help text :  message body should start with "--help" and the
+        server will respond with help text.
