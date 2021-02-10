@@ -6,89 +6,82 @@ Project : Networks Coursework
 import socket
 import sys
 import errno
-import pickle
+import json
 import threading
 
 HEADERLEN = 20
 
-with open("help.txt", "r") as f:
-    helpText = f.read()
-
+# Read username and server address
 try:
     username, hostname, port = sys.argv[1], sys.argv[2], int(sys.argv[3])
-except:
+except Exception as exc:
+    print(exc)
     print("\nOne or more arguments missing/invalid, please run the program as following:")
     print("\tpython client.py [username] [hostname] [port]\n")
     sys.exit()
 
+# Connect to the server
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
 try:
-    print("Trying to connect to the server at {}:{}\n".format(hostname, port))
+    print("Trying to connect to the server at %s:%s" % (hostname, port))
     client.connect((hostname, port))
 except Exception as e:
     print("Could not connect to the server due to following error :\n", e)
     sys.exit()
+else:
+    print("Successfully connected to server!\n")
+    client.setblocking(False)
 
-client.setblocking(False)
 
-
-def encodeMessage(message):
+def encode_msg(msg):
     """Add the message length in bytes in the header so the server knows 
     how many bytes to receive to get the full message"""
-    message = pickle.dumps(message)
-    return bytes(str(len(message)).ljust(HEADERLEN), "utf-8") + message
+    msg = json.dumps(msg)
+    header = str(len(msg)).ljust(HEADERLEN)
+    return (header + msg).encode()
 
 
-client.send(encodeMessage(username))
-print(helpText)
+# Send username to the server
+client.send(encode_msg(username))
 
-# Will be used to stop the displayMessage thread once the user 
+# Will be used to stop the display_msg thread once the user 
 # decides to leave or there's a keyboard interrupt
 isActive = True
 
 
-def displayMessages():
-    # Loop over received messages
+def display_msgs():
+    """Receive and display messages"""
     while isActive:
         try:
-            while True:
-                messageLength = client.recv(HEADERLEN)
-                if not len(messageLength):
-                    print("Connection closed by the server, press Enter to exit.")
-                    sys.exit()
-
-                messageLength = int(messageLength.decode('utf-8').strip())
-                message = pickle.loads(client.recv(messageLength))
-                print("[{}] > {}".format((message['from']).ljust(10), message['message']))
-
-        except Exception as e:
-            if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
-                print('Following error occurred while fetching messages\n', str(e),
-                      '\nPress Enter to exit')
+            msg_len = client.recv(HEADERLEN)
+            if not len(msg_len):
+                print("Connection closed by the server, press Enter to exit.")
                 sys.exit()
+        except Exception as err:
+            if err.errno != errno.EAGAIN and err.errno != errno.EWOULDBLOCK:
+                print('Following error occurred while fetching messages\n%s\nPress Enter to exit' % err)
+                sys.exit()
+        else:
+            msg_len = int(msg_len.decode('utf-8').strip())
+            msg = json.loads(client.recv(msg_len))
+            print("[{}] > {}".format((msg['from']).ljust(10), msg['message']))
 
 
-displayMsgThread = threading.Thread(target=displayMessages)
+# Create a separate thread for displaying messages so incoming messages
+# can be displayed while waiting for user input
+displayMsgThread = threading.Thread(target=display_msgs)
 displayMsgThread.start()
 
 try:
-    while displayMsgThread.isAlive():
+    # DisplayMsgThread is alive until client is connected to the server so,
+    # keep taking user input until it is alive
+    while displayMsgThread.is_alive():
+        # Read message and truncate if it's too long to send
         message = input()
-
-        if message == "--leave":
-            print("You have now left the server.")
-            isActive = False
-            sys.exit()
-
-        elif message == "--help":
-            print(helpText)
-
-        elif message != '':
-            if message != "--list":
-                print("[{}] > {}".format('YOU       ', message))
+        message = (message[:10**HEADERLEN]) if len(message) > 10**HEADERLEN else message
+        if message != '':
             try:
-                client.send(encodeMessage(message))
+                client.send(encode_msg(message))
             except Exception as e:
                 print("Your message could not be delivered due to following error:\n", e)
 
