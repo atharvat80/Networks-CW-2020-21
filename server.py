@@ -1,5 +1,5 @@
 """
-Author      : 000802977, Atharva Tidke
+Author      : Atharva Tidke
 Description : Server file for the networks coursework
 """
 
