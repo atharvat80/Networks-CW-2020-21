@@ -1,4 +1,4 @@
-Author : htrf88
+Author : Atharva Tidke
 
 All messages sent between the server and the client are in the following format :
 
